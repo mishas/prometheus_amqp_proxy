@@ -1,0 +1,25 @@
+
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "config",
+    srcs = ["config.go"],
+    deps = ["//vendor/gopkg.in/yaml.v2:go_default_library"],
+)
+
+go_library(
+    name = "rpc",
+    srcs = ["rpc.go", "utils.go"],
+    deps = ["//vendor/github.com/streadway/amqp:go_default_library"],
+)
+
+go_binary(
+    name = "proxy",
+    srcs = ["proxy.go"],
+    deps = [
+        ":config",
+        ":rpc",
+        "//vendor/github.com/streadway/amqp:go_default_library",
+    ],
+)
+

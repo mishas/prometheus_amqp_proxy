@@ -1,0 +1,15 @@
+
+scrape_configs:
+    - job_name: "prometheus"
+      amqp_config:
+          url: "amqps://my_rabbitmq/"
+          exchange: "my_exchange"
+  
+      tls_config:
+          ca_file: "my_certs/cacert.pem"
+          cert_file: "my_certs/cert.pem"
+          key_file: "my_certs/key.pem"
+
+      target_groups:
+        - targets: ["amqps://my_rabbitmq:7149/", "amqps://my_rabbitmq:8153/"]
+
