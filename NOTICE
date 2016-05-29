@@ -1,0 +1,12 @@
+The following components are included in this product:
+
+YAML support for the Go language.
+http://gopkg.in/yaml.v2
+Copyright (c) 2011-2014 - Canonical Inc.
+Licensed under the LGPLv3
+
+Go client for AMQP 0.9.1
+https://github.com/streadway/amqp
+Copyright (c) 2012, Sean Treadway, SoundCloud Ltd.
+See https://github.com/streadway/amqp/blob/master/LICENSE for license details
+
