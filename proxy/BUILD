@@ -21,5 +21,6 @@ go_binary(
         ":rpc",
         "//vendor/github.com/streadway/amqp:go_default_library",
     ],
+    data = ["//:config.yaml"],
 )
 
