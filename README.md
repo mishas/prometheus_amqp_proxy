@@ -27,6 +27,10 @@ scrape_configs:
         regex: (.*)
         target_label: __param_target
         replacement: ${1}
+      - source_labels: [__param_target]
+        regex: (.*)
+        target_label: instance
+        replacement: ${1}
       - source_labels: []
         regex: .*
         target_label: __address__
