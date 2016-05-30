@@ -11,8 +11,8 @@ import (
 
 	"github.com/streadway/amqp"
 
-    "github.com/mishas/prometheus_amqp_proxy/proxy/config"
-    "github.com/mishas/prometheus_amqp_proxy/proxy/rpc"
+	"github.com/mishas/prometheus_amqp_proxy/proxy/config"
+	"github.com/mishas/prometheus_amqp_proxy/proxy/rpc"
 )
 
 type externalAuth struct{}

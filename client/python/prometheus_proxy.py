@@ -41,7 +41,6 @@ class _PrometheusMetricsServer(threading.Thread):
 
     def _amqp_loop(self):
         for method, props, unused_body in self._channel.consume(self._routing_key, exclusive=True):
-            response = prometheus_client.generate_latest(prometheus_client.REGISTRY)
             self._channel.publish("",
                             props.reply_to,
                             prometheus_client.generate_latest(prometheus_client.REGISTRY),
