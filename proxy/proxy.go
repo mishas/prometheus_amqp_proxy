@@ -3,16 +3,26 @@ package main
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/streadway/amqp"
 
-	"github.com/mishas/prometheus_amqp_proxy/proxy/config"
 	"github.com/mishas/prometheus_amqp_proxy/proxy/rpc"
+)
+
+var (
+	amqpURL      = flag.String("amqp_url", "", "URL of the AMQP server to dial")
+	amqpExchange = flag.String("amqp_exchange", "", "Name of the AMQP exchange to use")
+
+	certsDir = flag.String("certs_dir", "", "Directory of certs for TLS connection to AMQP, or empty for non-TLS connection. "+
+		"Expected files are: cacert.pem, cert.pem and key.pem.")
+	serverName = flag.String("server_name", "", "Name of the server for TLS verification, or nil for default")
 )
 
 type externalAuth struct{}
@@ -25,26 +35,26 @@ func (a *externalAuth) Response() string {
 }
 
 // getAMQPConfig returns a reference to the amqp.Config object.
-// certsDir should be the path to the directory holding {cacert,cert,key}.pem files for the TLS
-// connection, or nil for no TLS.
-// serverName should be set to the CN defined in the certificates expected to be received from the
-// server, or nil, if CN is the same as the server's DNS name.
-func getAMQPConfig(cfg config.TLSConfig) (*amqp.Config, error) {
+func getAMQPConfig() (*amqp.Config, error) {
 	tlscfg := new(tls.Config)
-	tlscfg.RootCAs = x509.NewCertPool()
-	if ca, err := ioutil.ReadFile(cfg.CAFile); err == nil {
-		tlscfg.RootCAs.AppendCertsFromPEM(ca)
-	} else {
-		return nil, fmt.Errorf("Failed reading CA certificate: %v", err)
-	}
+	if *certsDir != "" {
+		tlscfg.RootCAs = x509.NewCertPool()
+		if ca, err := ioutil.ReadFile(*certsDir + "/cacert.pem"); err == nil {
+			tlscfg.RootCAs.AppendCertsFromPEM(ca)
+		} else {
+			return nil, fmt.Errorf("Failed reading CA certificate: %v", err)
+		}
 
-	if cert, err := tls.LoadX509KeyPair(cfg.CertFile, cfg.KeyFile); err == nil {
-		tlscfg.Certificates = append(tlscfg.Certificates, cert)
-	} else {
-		return nil, fmt.Errorf("Failed reading client certificate: %v", err)
-	}
+		if cert, err := tls.LoadX509KeyPair(*certsDir+"/cert.pem", *certsDir+"/key.pem"); err == nil {
+			tlscfg.Certificates = append(tlscfg.Certificates, cert)
+		} else {
+			return nil, fmt.Errorf("Failed reading client certificate: %v", err)
+		}
 
-	tlscfg.ServerName = cfg.ServerName
+		if *serverName != "" {
+			tlscfg.ServerName = *serverName
+		}
+	}
 
 	return &amqp.Config{
 		SASL:            []amqp.Authentication{&externalAuth{}},
@@ -53,22 +63,21 @@ func getAMQPConfig(cfg config.TLSConfig) (*amqp.Config, error) {
 }
 
 type handler struct {
-	c      *rpc.RpcClient
-	prefix string
+	c *rpc.RpcClient
 }
 
-func newHandler(scrapeCfg config.ScrapeConfig) handler {
-	cfg, err := getAMQPConfig(scrapeCfg.TLSConfig)
+func newHandler() handler {
+	cfg, err := getAMQPConfig()
 	if err != nil {
 		log.Fatalf("Failed creating AMQP config: %v", err)
 	}
 
-	c := rpc.NewRPCClient(scrapeCfg.AMQPConfig.URL, scrapeCfg.AMQPConfig.Exchange, cfg)
+	c := rpc.NewRPCClient(*amqpURL, *amqpExchange, cfg)
 	if err := c.Init(); err != nil {
 		log.Fatalf("Failed to create RPCClient: %v", err)
 	}
 
-	return handler{c, scrapeCfg.JobName}
+	return handler{c}
 }
 
 func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -78,10 +87,10 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s := strings.Split(r.Host, ":")
-	port := s[len(s)-1]
+	params := r.URL.Query()
+	target := params.Get("target")
 
-	ch, err := h.c.Call(h.prefix + ":" + port)
+	ch, err := h.c.Call(target)
 	if err != nil {
 		log.Printf("Failed to publish: %v", err)
 		return
@@ -94,32 +103,21 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func runListeners(addr string) {
-	// TODO: Should this be http.ListenAndServeTLS?
-	log.Fatal(http.ListenAndServe(addr, nil))
-}
-
 func main() {
-	cfg, err := config.LoadFile("./config.yaml")
-	if err != nil {
-		log.Fatalf("Failed loading config: %v", err)
+	flag.Parse()
+
+	if !strings.HasPrefix(*amqpURL, "amqp://") && !strings.HasPrefix(*amqpURL, "amqps://") {
+		fmt.Println("Please provide a valid URL for an AMQP server with the -amqp_url flag.")
+		os.Exit(1)
 	}
 
-	if cfgCount := len(cfg.ScrapeConfigs); cfgCount != 1 {
-		log.Fatalf("Only supporting 1 scrape_config, %d supplied.", cfgCount)
+	if *amqpExchange == "" {
+		fmt.Println("Please provide an AMQP exchange to use with the -amqp_exchange flag.")
+		os.Exit(1)
 	}
-
-	scrapeCfg := cfg.ScrapeConfigs[0]
 
 	println("Starting main")
-	http.Handle("/metrics", newHandler(*scrapeCfg))
+	http.Handle("/proxy", newHandler())
 
-	for _, targetGroup := range scrapeCfg.TargetGroups {
-		for _, target := range targetGroup.Targets {
-			s := strings.Split(target, ":")
-			go runListeners(":" + s[len(s)-1])
-		}
-	}
-
-	select {}
+	log.Fatal(http.ListenAndServe(":8200", nil))
 }
