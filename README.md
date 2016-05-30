@@ -4,7 +4,7 @@ Proxy for feeding prometheus scraper from AMQP RPC sources.
 
 ## Building and running
 
-### Build and run using [bazel](http://baze.io/)
+### Build and run using [bazel](http://bazel.io/)
 
     bazel run //proxy:proxy -- -amqp_url=amqp://my_rabbitmq_url/ -amqp_exchange=my_prometheus_exchange
 

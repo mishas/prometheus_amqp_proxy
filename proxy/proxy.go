@@ -20,7 +20,8 @@ var (
 	amqpURL      = flag.String("amqp_url", "", "URL of the AMQP server to dial")
 	amqpExchange = flag.String("amqp_exchange", "", "Name of the AMQP exchange to use")
 
-	certsDir   = flag.String("certs_dir", "", "Directory of certs for TLS connection to AMQP, or empty for non-TLS connection")
+	certsDir = flag.String("certs_dir", "", "Directory of certs for TLS connection to AMQP, or empty for non-TLS connection. "+
+		"Expected files are: cacert.pem, cert.pem and key.pem.")
 	serverName = flag.String("server_name", "", "Name of the server for TLS verification, or nil for default")
 )
 
