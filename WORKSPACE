@@ -1,3 +1,4 @@
+workspace(name = "prometheus_amqp_proxy")
 
 new_git_repository(
     name = "pika_git",
