@@ -28,8 +28,8 @@ class _PrometheusMetricsServer(threading.Thread):
                 self._amqp_loop()
             finally:
                 logging.exception("Exception in AMQP loop")
-                if connection.is_open:
-                    connection.close()
+                if self._connection.is_open:
+                    self._connection.close()
 
     def _connect(self):
         self._connection = pika.BlockingConnection(self._connection_params)
