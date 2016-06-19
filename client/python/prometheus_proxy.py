@@ -26,7 +26,7 @@ class _PrometheusMetricsServer(threading.Thread):
                 if not self._connection.is_open:
                     self._connect(connection_params)
                 self._amqp_loop()
-            finally:
+            except:
                 logging.exception("Exception in AMQP loop")
                 if self._connection.is_open:
                     self._connection.close()
