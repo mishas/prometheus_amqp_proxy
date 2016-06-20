@@ -24,7 +24,7 @@ class _PrometheusMetricsServer(threading.Thread):
         while True:
             try:
                 if not self._connection.is_open:
-                    self._connect(self._connection_params)
+                    self._connect()
                 self._amqp_loop()
             except:
                 logging.exception("Exception in AMQP loop")
@@ -37,7 +37,6 @@ class _PrometheusMetricsServer(threading.Thread):
         self._channel.exchange_declare(self._exchange, durable=True)
         self._channel.queue_declare(self._routing_key, auto_delete=True)
         self._channel.queue_bind(self._routing_key, self._exchange)
-        self._channel.basic_qos(prefetch_count=1)
 
     def _amqp_loop(self):
         for method, props, unused_body in self._channel.consume(self._routing_key, exclusive=True):
