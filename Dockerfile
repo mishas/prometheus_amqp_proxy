@@ -10,5 +10,7 @@ RUN apk add --update git \
  && go install -v github.com/mishas/prometheus_amqp_proxy/proxy \
  && apk del --purge git && rm -rf /var/cache/apk/*
 
+EXPOSE 8200
+
 ENTRYPOINT ["bin/proxy"]
 
