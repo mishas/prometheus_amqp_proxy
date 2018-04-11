@@ -1,40 +1,5 @@
 workspace(name = "prometheus_amqp_proxy")
 
-new_git_repository(
-    name = "pika_git",
-    remote = "https://github.com/pika/pika.git",
-    tag = "0.10.0",
-    build_file_content = """
-py_library(
-    name = "pika",
-    srcs = glob(["pika/*.py", "pika/**/*.py"]),
-    visibility = ["//visibility:public"],
-)        
-    """,
-)
-             
-bind( 
-    name = "pika",
-    actual = "@pika_git//:pika"
-)   
-    
-new_git_repository(
-    name = "prometheus_client_py_git",
-    remote = "https://github.com/prometheus/client_python.git",
-    tag = "0.0.13",
-    build_file_content = """
-py_library(
-    name = "prometheus_client",
-    srcs = glob(["prometheus_client/*.py"]),
-    visibility = ["//visibility:public"],
-)
-    """,
-)
-
-bind(
-    name = "prometheus_client_py",
-    actual = "@prometheus_client_py_git//:prometheus_client",
-)
 
 # Go support
 http_archive(
@@ -52,3 +17,26 @@ go_repository(
     commit = "8e4aba63da9fc5571e01c6a45dc809a58cbc5a68",
     importpath = "github.com/streadway/amqp",
 )
+
+
+# Python pip support
+git_repository(
+    name = "io_bazel_rules_python",
+    remote = "https://github.com/bazelbuild/rules_python.git",
+    commit = "b25495c47eb7446729a2ed6b1643f573afa47d99",
+)
+
+load("@io_bazel_rules_python//python:pip.bzl", "pip_repositories")
+pip_repositories()
+
+# This rule translates the specified requirements.txt into @pip_deps//:requirements.bzl,
+# which itself exposes a pip_install method.
+load("@io_bazel_rules_python//python:pip.bzl", "pip_import")
+pip_import(
+   name = "pip_deps",
+   requirements = "//client/python:requirements.txt",
+)
+
+# Load the pip_install symbol for my_deps, and create the dependencies' repositories.
+load("@pip_deps//:requirements.bzl", "pip_install")
+pip_install()
