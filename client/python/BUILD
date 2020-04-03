@@ -6,8 +6,8 @@ py_library(
     name = "prometheus_proxy",
     srcs = ["prometheus_proxy.py"],
     deps = [
-        requirement("pika"),
-        requirement("prometheus_client"),
+        "//external:pika",
+        "//external:prometheus_client_py",
     ],
     imports = ["."],
     visibility = ["//visibility:public"],

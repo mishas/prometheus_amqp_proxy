@@ -57,5 +57,15 @@ pip_import(
 )
 
 # Load the pip_install symbol for my_deps, and create the dependencies' repositories.
-load("@pip_deps//:requirements.bzl", "pip_install")
+load("@pip_deps//:requirements.bzl", "pip_install", "requirement")
 pip_install()
+
+# For backward compatibility
+bind(
+    name = "pika",
+    actual = requirement("pika"),
+)
+bind(
+    name = "prometheus_client_py",
+    actual = requirement("prometheus_client"),
+)
