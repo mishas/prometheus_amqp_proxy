@@ -1,5 +1,3 @@
-load("@pip_deps//:requirements.bzl", "requirement")
-
 exports_files(["requirements.txt"])
 
 py_library(
