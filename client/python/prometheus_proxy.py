@@ -40,7 +40,7 @@ class _PrometheusMetricsServer(threading.Thread):
 
     def _amqp_loop(self):
         for method, props, unused_body in self._channel.consume(
-                self._routing_key, exclusive=True, no_ack=True):
+                self._routing_key, exclusive=True, auto_ack=True):
             self._channel.basic_publish(
                 "",
                 props.reply_to,
