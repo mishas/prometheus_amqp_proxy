@@ -1,2 +1,2 @@
-pika==0.10.0
-prometheus_client==0.0.13
+pika==1.1.0
+prometheus_client==0.7.1

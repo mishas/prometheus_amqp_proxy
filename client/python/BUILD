@@ -2,7 +2,6 @@ load("@pip_deps//:requirements.bzl", "requirement")
 
 exports_files(["requirements.txt"])
 
-
 py_library(
     name = "prometheus_proxy",
     srcs = ["prometheus_proxy.py"],
@@ -13,4 +12,3 @@ py_library(
     imports = ["."],
     visibility = ["//visibility:public"],
 )
-

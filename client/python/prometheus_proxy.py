@@ -41,11 +41,13 @@ class _PrometheusMetricsServer(threading.Thread):
     def _amqp_loop(self):
         for method, props, unused_body in self._channel.consume(
                 self._routing_key, exclusive=True, no_ack=True):
-            self._channel.publish("",
-                            props.reply_to,
-                            prometheus_client.generate_latest(prometheus_client.REGISTRY),
-                            pika.BasicProperties(correlation_id=props.correlation_id))
-    
+            self._channel.basic_publish(
+                "",
+                props.reply_to,
+                prometheus_client.generate_latest(prometheus_client.REGISTRY),
+                pika.BasicProperties(correlation_id=props.correlation_id),
+            )
+
 
 def start_amqp_server(connection_params, exchange, routing_key):
     """Starts an AMQP server for prometheus metrics as a daemon thread."""
