@@ -1,3 +1,4 @@
+import atexit
 import logging
 import threading
 
@@ -17,18 +18,26 @@ class _PrometheusMetricsServer(threading.Thread):
         self._routing_key = routing_key
         self._connection = None
         self._channel = None
+        self._close_event = threading.Event()
         # Connecting in ctor, so that an exception will be raised in case of bad parameters.
         self._connect()
+        self._running = True
+
+    def stop(self):
+        self._running = False
+        if self._connection.is_open:
+            self._connection.close()
+        self._close_event.set()
 
     def run(self):
-        while True:
+        while self._running:
             try:
                 if not self._connection.is_open:
                     self._connect()
                 self._amqp_loop()
             except:
                 logging.exception("Exception in AMQP loop")
-                if self._connection.is_open:
+                if self._connection.is_open and self._running:
                     self._connection.close()
 
     def _connect(self):
@@ -53,5 +62,9 @@ def start_amqp_server(connection_params, exchange, routing_key):
     """Starts an AMQP server for prometheus metrics as a daemon thread."""
     t = _PrometheusMetricsServer(connection_params, exchange, routing_key)
     t.daemon = True
+    def stop():
+        t._connection.add_callback_threadsafe(t.stop)
+        t._close_event.wait()
+    atexit.register(stop)
     t.start()
 
