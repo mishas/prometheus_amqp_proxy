@@ -24,10 +24,12 @@ class _PrometheusMetricsServer(threading.Thread):
         self._running = True
 
     def stop(self):
-        self._running = False
-        if self._connection.is_open:
-            self._connection.close()
-        self._close_event.set()
+        try:
+            self._running = False
+            if self._connection.is_open:
+                self._connection.close()
+        finally:
+            self._close_event.set()
 
     def run(self):
         while self._running:
