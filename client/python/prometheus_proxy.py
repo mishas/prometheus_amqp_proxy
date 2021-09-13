@@ -7,7 +7,7 @@ import prometheus_client
 
 
 # TODO: Add prometheus counters in this file.
-
+CLOSE_EVENT_TIMEOUT_SECONDS = 5
 
 class _PrometheusMetricsServer(threading.Thread):
 
@@ -68,7 +68,9 @@ def start_amqp_server(connection_params, exchange, routing_key):
     def stop():
         t._running = False
         t._connection.add_callback_threadsafe(t.stop)
-        t._close_event.wait()
+        if not t._close_event.wait(CLOSE_EVENT_TIMEOUT_SECONDS):
+            logging.error(f"Stop did not complete after {CLOSE_EVENT_TIMEOUT_SECONDS}s! "
+                          "Exiting anyway, the rabbit server may still see the queue name as in use")
     atexit.register(stop)
     t.start()
 
