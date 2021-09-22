@@ -69,8 +69,8 @@ def start_amqp_server(connection_params, exchange, routing_key):
         t._running = False
         t._connection.add_callback_threadsafe(t.stop)
         if not t._close_event.wait(CLOSE_EVENT_TIMEOUT_SECONDS):
-            logging.error(f"Stop did not complete after {CLOSE_EVENT_TIMEOUT_SECONDS}s! "
-                          "Exiting anyway, the rabbit server may still see the queue name as in use")
+            logging.error("Stop did not complete after %ss! "
+                          "Exiting anyway, the rabbit server may still see the queue name as in use", CLOSE_EVENT_TIMEOUT_SECONDS)
     atexit.register(stop)
     t.start()
 
