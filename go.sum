@@ -1,0 +1,4 @@
+github.com/mishas/prometheus_amqp_proxy v0.0.0-20210922202126-c829a4c0c383 h1:q6BnGYfUGpM5x24Rm28NJE26zen897viIuL4uXSOSCU=
+github.com/mishas/prometheus_amqp_proxy v0.0.0-20210922202126-c829a4c0c383/go.mod h1:aI1yFMkuQo9jcafi/XpRkqpyqZY3YYkT7s6Q61nZvMg=
+github.com/streadway/amqp v1.0.0 h1:kuuDrUJFZL1QYL9hUNuCxNObNzB0bV/ZG5jV3RWAQgo=
+github.com/streadway/amqp v1.0.0/go.mod h1:AZpEONHx3DKn8O/DFsRAY58/XVQiIPMTMB1SddzLXVw=
