@@ -11,11 +11,12 @@ CLOSE_EVENT_TIMEOUT_SECONDS = 5
 
 class _PrometheusMetricsServer(threading.Thread):
 
-    def __init__(self, connection_params, exchange, routing_key):
+    def __init__(self, connection_params, exchange, routing_key, exclusive):
         super().__init__()
         self._connection_params = connection_params
         self._exchange = exchange
         self._routing_key = routing_key
+        self._exclusive = exclusive
         self._connection = None
         self._channel = None
         self._close_event = threading.Event()
@@ -52,7 +53,7 @@ class _PrometheusMetricsServer(threading.Thread):
 
     def _amqp_loop(self):
         for method, props, unused_body in self._channel.consume(
-                self._routing_key, exclusive=True, auto_ack=True):
+                self._routing_key, exclusive=self._exclusive, auto_ack=True):
             self._channel.basic_publish(
                 "",
                 props.reply_to,
@@ -61,9 +62,9 @@ class _PrometheusMetricsServer(threading.Thread):
             )
 
 
-def start_amqp_server(connection_params, exchange, routing_key):
+def start_amqp_server(connection_params, exchange, routing_key, exclusive=True):
     """Starts an AMQP server for prometheus metrics as a daemon thread."""
-    t = _PrometheusMetricsServer(connection_params, exchange, routing_key)
+    t = _PrometheusMetricsServer(connection_params, exchange, routing_key, exclusive)
     t.daemon = True
     def stop():
         t._running = False
